@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fair Student Picker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Righteous&family=DM+Sans:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #FF6B35;
+            --secondary: #F7931E;
+            --accent: #004E89;
+            --background: #FFF8F0;
+            --card: #FFFFFF;
+            --text: #1A1A1A;
+            --text-light: #666;
+            --success: #06D6A0;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #FFF8F0 0%, #FFE5D9 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-30px, 30px) rotate(5deg); }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            font-family: 'Righteous', cursive;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            color: var(--primary);
+            text-shadow: 3px 3px 0px var(--secondary);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        .class-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .class-btn {
+            padding: 12px 24px;
+            border: 3px solid var(--accent);
+            background: var(--card);
+            color: var(--accent);
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-family: 'DM Sans', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .class-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: var(--accent);
+            transition: width 0.4s, height 0.4s, top 0.4s, left 0.4s;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+        
+        .class-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .class-btn:hover {
+            color: var(--card);
+            transform: scale(1.05) rotate(-2deg);
+        }
+        
+        .class-btn.active {
+            background: var(--accent);
+            color: var(--card);
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px var(--shadow);
+        }
+        
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+        
+        .mode-card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 32px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            border: 4px solid transparent;
+            position: relative;
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+        
+        .mode-card::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 24px;
+            border: 4px solid var(--primary);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .mode-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px var(--shadow);
+        }
+        
+        .mode-card.active::after {
+            opacity: 1;
+        }
+        
+        .mode-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .mode-card:nth-child(1) .mode-icon { animation-delay: 0s; }
+        .mode-card:nth-child(2) .mode-icon { animation-delay: 0.3s; }
+        
+        .mode-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--accent);
+        }
+        
+        .mode-description {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+        
+        .action-area {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 40px var(--shadow);
+            margin-bottom: 40px;
+            animation: slideUp 0.8s ease-out 0.6s both;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pick-btn {
+            width: 100%;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Righteous', cursive;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 24px rgba(255, 107, 53, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pick-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .pick-btn:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+        
+        .pick-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 32px rgba(255, 107, 53, 0.5);
+        }
+        
+        .pick-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .pick-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .result-area {
+            text-align: center;
+            margin-top: 32px;
+            min-height: 200px;
+        }
+        
+        .selected-student {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            color: var(--accent);
+            margin: 20px 0;
+            padding: 32px;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(247, 147, 30, 0.1) 100%);
+            border-radius: 20px;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 3px dashed var(--primary);
+        }
+        
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) rotate(-10deg);
+            }
+            70% {
+                transform: scale(1.1) rotate(5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+        
+        .stats {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+        
+        .lunch-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+        
+        .lunch-student {
+            background: linear-gradient(135deg, var(--card) 0%, #FFF8F0 100%);
+            padding: 16px;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            animation: slideIn 0.4s ease-out backwards;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .lunch-student:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+        
+        .order-number {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            margin-right: 12px;
+            font-weight: 700;
+        }
+        
+        .info-panel {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 4px 20px var(--shadow);
+            animation: fadeIn 1s ease-out 0.8s both;
+        }
+        
+        .info-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(247, 147, 30, 0.1) 100%);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        
+        .reset-btn {
+            background: #E63946;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .reset-btn:hover {
+            background: #D62828;
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .mode-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-area {
+                padding: 24px;
+            }
+            
+            .lunch-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✨ Fair Student Picker ✨</h1>
+            <p class="subtitle">Ensuring every student gets their fair turn!</p>
+        </header>
+        
+        <div class="class-selector" id="classSelector"></div>
+        
+        <div class="mode-selector">
+            <div class="mode-card" onclick="selectMode('lunch')">
+                <span class="mode-icon">🍽️</span>
+                <div class="mode-title">Lunch Order</div>
+                <div class="mode-description">Generate fair rotating lunch order that remembers who went last</div>
+            </div>
+            
+            <div class="mode-card" onclick="selectMode('question')">
+                <span class="mode-icon">🙋</span>
+                <div class="mode-title">Pick for Questions</div>
+                <div class="mode-description">Select students fairly based on how many times they've been picked</div>
+            </div>
+        </div>
+        
+        <div class="action-area" id="actionArea" style="display: none;">
+            <button class="pick-btn" id="pickBtn" onclick="performAction()">Pick Student</button>
+            <div class="result-area" id="resultArea"></div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-title">
+                📊 Class Statistics
+            </div>
+            <div id="statsArea"></div>
+            <button class="reset-btn" onclick="resetStats()">Reset All Statistics</button>
+        </div>
+    </div>
+
+    <script>
+        // Student data organized by class
+        const studentData = {
+            '5A': [
+                'MUHAMMED ABDULKADIR', 'ESLEM KARASOY', 'ALI EREN KUTAY', 'ALI SAID AYDIN',
+                'ALPER SELIM TEKIN', 'AZAD EMRE GULEKEN', 'ECEM FIDAN ALKANAT', 'EFSA NISAN AKYILDIZ',
+                'ELA EKMEN', 'ISIL AVSIN OZTURK', 'MEHMET CETIN ADIGUZEL', 'MIHRIMAH BABAYIGIT',
+                'MIHRIMAH ELBEY', 'MUHAMMED FURKANATES', 'SERHAN SARIASLAN', 'SUMEYYE ELA ALTUNBAY',
+                'YIGIT HATTAPOGLU', 'IDIL BERFIN ARI', 'ADA OZTURK', 'YUSUF BAHOZ ADIGUZEL',
+                'DERIN MIRA ELALTUNTERIN', 'ZEYNEP KAREN TURGUT', 'BERAT OZCOSKUN', 'JEHAT KURT'
+            ],
+            '5B': [
+                'RAVZA SENA GUVENC', 'AHMET BICER', 'ALI BICER', 'AZAD UYANSIZ',
+                'BEREN SURA KARAKUS', 'DENIZ ROJAN ISIK', 'DORUK KENANOGLU', 'BARIS TUTMAZ',
+                'ELIF BERRA DABANOGLU', 'ELIF OZBUDAK', 'LORIN CAN', 'HILAL NERGIZ BASMA',
+                'MEYRA SELLI', 'RAVZA UYANSIZ', 'SEVVAL ONAT', 'ZEHRA KACMAZ',
+                'MIRA OZTURK', 'MUHAMMED EYMENGUNES', 'MUSTAFA BARIS KILINC', 'KAWA',
+                'DICLE AKBAS', 'MUHAMMED AKYILDIZ', 'YUSUF ANIL KARAKUS'
+            ],
+            '5C': [
+                'MUHAMMED HASANTANRIKULU', 'AYSE MINA CICEK', 'NEHIR ILERI', 'RANA LORIN ICTEN',
+                'SIYABEND KURTAR', 'SUMEYYE GONUL ASLAN', 'SERVAN PURSUK', 'MIRAY BIRKAN',
+                'MUHAMMED RASID BASMA', 'OMER GUMUSTAS', 'SALIH ISLAM DURMAZ', 'NISA DURMAZ',
+                'ELIF ADA ASLAN'
+            ],
+            '5D': [
+                'FATIH MEHMET TOSUN', 'EMIR ALTUN', 'SULTAN SILA KOCA', 'ADA YILDIZ',
+                'AHMET ALP KUYUMCU', 'AHMET MIRAN CETIN', 'ALI IMRAN YAVUZ', 'ARDIL UMUT YASAN',
+                'AREN KUMAS', 'BEYZA BATMAZ', 'DICLE GOZE', 'DORUK PAMIR ADIGUZEL',
+                'ECEM ILGIN NAZLI', 'ELIF ONDER', 'ESLEMSAH SUNAY', 'FIDEL AMED YALCIN',
+                'HASAN SEYHMUS KOYUNCU', 'HIRANUR DENKTAS', 'LARA MERYEM SIS', 'MUHAMMED ARAS TANBOGA',
+                'YUSUF EYMEN GULTEKIN', 'ZEYNEP CENNET', 'DERIN MIRAY OZDOGAN', 'MEHMET ESAT ALBAYRAK'
+            ],
+            '5E': [
+                'ARMANC BARIS DAG', 'IPEK MAYA BORAN', 'ROBIN ZENGIN', 'BERAT KIR',
+                'CINAR CAKIR', 'DENIZ BODAKCI', 'DILCEM MIRA KAPLAN', 'EKIN AMARA KAYA',
+                'EMIR ALI ARICA', 'EREN CIFTSUREN', 'ISIL TATAR', 'LORIN DELAL ALTIN',
+                'MAHIR KARAKAYA', 'MEHMET EYMEN DEDEOGLU', 'MILA KACAR', 'MINA KAYMAK',
+                'MUHAMMED ERAY GEZER', 'MUHAMMED SAIT AKYILDIZ', 'MUSTAFA OZAN KARAHAN', 'UMUT VEJIN KORKMAZ',
+                'YEKZAN YIGIT SAHIN', 'ARIN SARYA CALISKAN', 'BERFU NERMIN KAHRAMAN', 'NILDA CICEK'
+            ],
+            '5F': [
+                'BEREN HATUN OGUZ', 'ARJIN TARAMAN', 'AREN CEVHER', 'YUSUF MIRAN ARSLAN',
+                'ADA SEREFHANOGLU', 'BARAN SARRAC', 'BEREN ULCAY', 'CAGLA ILIK',
+                'DENIZ IZGI', 'ELA BEREN ADIGUZEL', 'EMIR GEYLANI KAN', 'ESILA GEZER',
+                'EYLUL ADA KIZILKAYA', 'MARZIYE CENNET YARGI', 'MUHAMMED GALIP CELEBI', 'MUHAMMED SEFA BOZTOGAN',
+                'MUHAMMED TAHA PIRINCCI', 'RUZGAR ABDURRAHMANATAS', 'ZEYNEP BAKIR', 'ZEYNEP ELA GUN',
+                'ZEYNEP MINA ASLAN', 'ZEYNEP ARYA OZER', 'NURAN AKGUN', 'ELISA YAKISIKLI'
+            ],
+            '7A': [],
+            '7B': []
+        };
+
+        let currentClass = null;
+        let currentMode = null;
+
+        // Storage helper functions
+        function getData(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch {
+                return null;
+            }
+        }
+
+        function setData(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        // Initialize storage
+        function initStorage() {
+            const classes = Object.keys(studentData);
+            
+            for (const className of classes) {
+                // Initialize question pick counts
+                if (!getData(`picks-${className}`)) {
+                    const picks = {};
+                    studentData[className].forEach(student => {
+                        picks[student] = 0;
+                    });
+                    setData(`picks-${className}`, picks);
+                }
+                
+                // Initialize lunch rotation
+                if (!getData(`lunch-${className}`)) {
+                    setData(`lunch-${className}`, {
+                        lastIndex: -1,
+                        order: []
+                    });
+                }
+            }
+        }
+
+        // Render class selector buttons
+        function renderClassSelector() {
+            const selector = document.getElementById('classSelector');
+            const classes = Object.keys(studentData);
+            
+            selector.innerHTML = classes.map(className => 
+                `<button class="class-btn" onclick="selectClass('${className}')">${className}</button>`
+            ).join('');
+        }
+
+        // Select a class
+        function selectClass(className) {
+            currentClass = className;
+            
+            document.querySelectorAll('.class-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === className) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            updateActionArea();
+            updateStats();
+        }
+
+        // Select mode (lunch or question)
+        function selectMode(mode) {
+            currentMode = mode;
+            
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            event.target.closest('.mode-card').classList.add('active');
+            
+            updateActionArea();
+        }
+
+        // Update action area based on selections
+        function updateActionArea() {
+            const actionArea = document.getElementById('actionArea');
+            const pickBtn = document.getElementById('pickBtn');
+            const resultArea = document.getElementById('resultArea');
+            
+            if (currentClass && currentMode) {
+                actionArea.style.display = 'block';
+                resultArea.innerHTML = '';
+                
+                if (currentMode === 'lunch') {
+                    pickBtn.textContent = '🍽️ Generate Lunch Order';
+                } else {
+                    pickBtn.textContent = '🙋 Pick Student for Question';
+                }
+            } else {
+                actionArea.style.display = 'none';
+            }
+        }
+
+        // Perform the selected action
+        function performAction() {
+            if (!currentClass || !currentMode) return;
+            
+            if (currentMode === 'lunch') {
+                generateLunchOrder();
+            } else {
+                pickStudentForQuestion();
+            }
+            
+            updateStats();
+        }
+
+        // Generate lunch order
+        function generateLunchOrder() {
+            const resultArea = document.getElementById('resultArea');
+            const students = [...studentData[currentClass]];
+            
+            if (students.length === 0) {
+                resultArea.innerHTML = '<div class="selected-student">No students in this class yet!</div>';
+                return;
+            }
+            
+            let lunchData = getData(`lunch-${currentClass}`);
+            if (!lunchData) {
+                lunchData = { lastIndex: -1, order: [] };
+            }
+            
+            // Rotate the list so the person who went last doesn't go last again
+            const lastIndex = lunchData.lastIndex;
+            let rotatedStudents = [...students];
+            
+            if (lastIndex >= 0 && lastIndex < students.length) {
+                // Move the last student to a better position (somewhere in the middle)
+                const lastStudent = students[lastIndex];
+                const newPosition = Math.floor(students.length / 3);
+                rotatedStudents = students.filter((_, i) => i !== lastIndex);
+                rotatedStudents.splice(newPosition, 0, lastStudent);
+            }
+            
+            // Shuffle the rest
+            for (let i = rotatedStudents.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [rotatedStudents[i], rotatedStudents[j]] = [rotatedStudents[j], rotatedStudents[i]];
+            }
+            
+            // Save the new order
+            const newLastIndex = students.indexOf(rotatedStudents[rotatedStudents.length - 1]);
+            setData(`lunch-${currentClass}`, {
+                lastIndex: newLastIndex,
+                order: rotatedStudents
+            });
+            
+            // Display the order
+            resultArea.innerHTML = `
+                <div class="selected-student">Lunch Order Generated! 🎉</div>
+                <div class="lunch-list">
+                    ${rotatedStudents.map((student, index) => `
+                        <div class="lunch-student" style="animation-delay: ${index * 0.05}s">
+                            <span class="order-number">${index + 1}</span>
+                            ${student}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Pick student for question
+        function pickStudentForQuestion() {
+            const resultArea = document.getElementById('resultArea');
+            const students = studentData[currentClass];
+            
+            if (students.length === 0) {
+                resultArea.innerHTML = '<div class="selected-student">No students in this class yet!</div>';
+                return;
+            }
+            
+            let picks = getData(`picks-${currentClass}`);
+            if (!picks) {
+                picks = {};
+                students.forEach(student => picks[student] = 0);
+            }
+            
+            // Find the minimum pick count
+            const minPicks = Math.min(...students.map(s => picks[s] || 0));
+            
+            // Get all students with the minimum pick count
+            const leastPickedStudents = students.filter(s => (picks[s] || 0) === minPicks);
+            
+            // Randomly select from least picked students
+            const selectedStudent = leastPickedStudents[Math.floor(Math.random() * leastPickedStudents.length)];
+            
+            // Update pick count
+            picks[selectedStudent] = (picks[selectedStudent] || 0) + 1;
+            setData(`picks-${currentClass}`, picks);
+            
+            // Display result
+            resultArea.innerHTML = `
+                <div class="selected-student">
+                    ${selectedStudent}
+                </div>
+                <div class="stats">
+                    Picked ${picks[selectedStudent]} time${picks[selectedStudent] > 1 ? 's' : ''} this period
+                </div>
+            `;
+        }
+
+        // Update statistics display
+        function updateStats() {
+            const statsArea = document.getElementById('statsArea');
+            
+            if (!currentClass) {
+                statsArea.innerHTML = '<p style="color: var(--text-light);">Select a class to view statistics</p>';
+                return;
+            }
+            
+            const students = studentData[currentClass];
+            
+            if (students.length === 0) {
+                statsArea.innerHTML = '<p style="color: var(--text-light);">No students in this class yet!</p>';
+                return;
+            }
+            
+            let picks = getData(`picks-${currentClass}`);
+            if (!picks) {
+                picks = {};
+                students.forEach(s => picks[s] = 0);
+            }
+            
+            const totalPicks = Object.values(picks).reduce((a, b) => a + b, 0);
+            const avgPicks = (totalPicks / students.length).toFixed(1);
+            const maxPicks = Math.max(...Object.values(picks));
+            const minPicks = Math.min(...Object.values(picks));
+            
+            statsArea.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${students.length}</div>
+                        <div class="stat-label">Students</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalPicks}</div>
+                        <div class="stat-label">Total Picks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${avgPicks}</div>
+                        <div class="stat-label">Average</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${minPicks}-${maxPicks}</div>
+                        <div class="stat-label">Range</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Reset statistics
+        function resetStats() {
+            if (!confirm('Are you sure you want to reset all statistics? This cannot be undone!')) {
+                return;
+            }
+            
+            const classes = Object.keys(studentData);
+            
+            for (const className of classes) {
+                const picks = {};
+                studentData[className].forEach(student => {
+                    picks[student] = 0;
+                });
+                setData(`picks-${className}`, picks);
+                setData(`lunch-${className}`, {
+                    lastIndex: -1,
+                    order: []
+                });
+            }
+            
+            alert('All statistics have been reset!');
+            updateStats();
+        }
+
+        // Initialize the app
+        function init() {
+            initStorage();
+            renderClassSelector();
+            updateStats();
+        }
+        
+        // Start the app when page loads
+        init();
+    </script>
+</body>
+</html>
